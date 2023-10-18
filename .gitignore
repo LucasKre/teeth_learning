@@ -60,3 +60,18 @@ local_settings.py
 *.njsproj
 *.sln
 *.sw?
+
+# Meshes
+*.stl
+*.obj
+*.ply
+
+# Pytorch checkpoints
+*.pth
+*.pt
+
+# Exclude Notebooks and notebook ceckpoints
+*.ipynb
+
+
+
