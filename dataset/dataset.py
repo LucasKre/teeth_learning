@@ -7,12 +7,13 @@ from tqdm import tqdm
 
 
 class BaseDataset(Dataset):
-    def __init__(self, root_dir, mesh_dir, process_dir, preprocessing=None):
+    def __init__(self, root_dir, mesh_dir, process_dir, preprocessing=None, in_memory=False):
         super(BaseDataset, self).__init__()
         self.root_dir = root_dir
         self.mesh_dir = mesh_dir
         self.process_dir = process_dir
         self.preprocessing = preprocessing
+        self.in_memory = in_memory
         # create folder if not existing
         if not os.path.exists(os.path.join(self.root_dir, self.process_dir)):
             os.makedirs(os.path.join(self.root_dir, self.process_dir))
@@ -21,6 +22,11 @@ class BaseDataset(Dataset):
         self.file_names = os.listdir(
             os.path.join(self.root_dir, self.process_dir)
         )
+        if self.in_memory:
+            print("Loading data into memory...")
+            self.data = []
+            for i in tqdm(range(len(self.file_names))):
+                self.data.append(self.__load_from_file(i))
 
     def __is_preprocessed(self):
         # list all files in mesh_dir
@@ -46,13 +52,14 @@ class BaseDataset(Dataset):
             # save to process_dir
             torch.save(data, os.path.join(self.root_dir, self.process_dir, file_name))
 
+    def __load_from_file(self, index):
+        return torch.load(os.path.join(self.root_dir, self.process_dir, self.file_names[index]))
+
     def __getitem__(self, index):
-        data = torch.load(
-            os.path.join(self.root_dir, self.process_dir, self.file_names[index])
-        )
-        return data
+        if self.in_memory:
+            return self.data[index]
+        else:
+            return self.__load_from_file(index)
 
     def __len__(self):
         return len(self.file_names)
-
-

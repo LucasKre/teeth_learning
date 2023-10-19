@@ -1,0 +1,26 @@
+{
+  "dataset": {
+    "root_dir": "data/faust",
+    "mesh_dir": "meshes",
+    "process_dir": "preprocessed_sdf",
+    "in_memory": true
+  },
+  "training": {
+    "log_dir": "logs",
+    "epochs": 1000,
+    "batch_size": 4096,
+    "lr": 0.0001,
+    "precision": 32
+  },
+  "network": {
+    "sdf_decoder": {
+      "hidden_dims": [256, 512, 768, 1024]
+    },
+    "mesh_encoder": {
+      "encoder_type": "ConvPointNet",
+      "encod_dim": 128,
+      "hidden_dim": 256,
+      "plane_resolution": 64
+    }
+  }
+}

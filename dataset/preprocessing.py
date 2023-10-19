@@ -1,5 +1,7 @@
 import numpy as np
+import torch
 from pysdf import SDF
+from scipy.spatial import KDTree
 
 
 class Compose:
@@ -46,18 +48,20 @@ class NormalizeMesh:
 class MeshToSdf:
     """Convert a mesh to a signed distance field."""
 
-    def __init__(self, surface_points=10000,
-                 offset_points=10000,
+    def __init__(self, surface_points=20000,
+                 offset_points=20000,
                  offset_s=0.1,
                  grid_resolution=32,
                  grid_min=-1,
-                 grid_max=1):
+                 grid_max=1,
+                 include_normals=True):
         self.surface_points = surface_points
         self.offset_points = offset_points
         self.offset_s = offset_s
         self.grid_resolution = grid_resolution
         self.grid_min = grid_min
         self.grid_max = grid_max
+        self.include_normals = include_normals
 
     def __call__(self, mesh):
         # transform to sdf
@@ -65,6 +69,15 @@ class MeshToSdf:
         # sample surface points
         random_surface_points = sdf_f.sample_surface(self.surface_points)
         surface_sdf = np.zeros(self.surface_points)
+
+        # surface normals
+        surface_normals = None
+        if self.include_normals:
+            # CAUTION: this only estimates the surface normals based on the nearest face
+            kd_tree = KDTree(mesh.vertices[mesh.faces].mean(axis=1))
+            _, index = kd_tree.query(random_surface_points)
+            surface_normals = mesh.face_normals[index]
+
 
         # sample offset points
         random_offset = np.random.normal(0, self.offset_s, (self.offset_points, 3))
@@ -81,4 +94,14 @@ class MeshToSdf:
         # sample in grid
         grid_sdf = sdf_f(grid_coords)
 
-        return (random_surface_points, surface_sdf), (random_offset_points, offset_sdf), (grid_coords, grid_sdf)
+        out_dict = {
+            "surface_points": torch.from_numpy(random_surface_points),
+            "surface_normals": torch.from_numpy(surface_normals) if surface_normals is not None else None,
+            "surface_sdf": torch.from_numpy(surface_sdf),
+            "offset_points": torch.from_numpy(random_offset_points),
+            "offset_sdf": torch.from_numpy(offset_sdf),
+            "grid_points": torch.from_numpy(grid_coords),
+            "grid_sdf": torch.from_numpy(grid_sdf)
+        }
+
+        return out_dict

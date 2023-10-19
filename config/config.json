@@ -1,0 +1,29 @@
+{
+  "dataset": {
+    "root_dir": "data/faust",
+    "mesh_dir": "meshes",
+    "process_dir": "preprocessed_sdf",
+    "in_memory": true
+  },
+  "training": {
+    "log_dir": "logs",
+    "epochs": 1000,
+    "batch_size": 4096,
+    "lr": 0.0001,
+    "precision": 32
+  },
+  "network": {
+    "sdf_decoder": {
+      "hidden_dims": [256, 512, 768, 1024]
+    },
+    "mesh_encoder": {
+      "encoder_type": "DGCNN",
+      "nr_of_points": 1024,
+      "hidden_dims": [32, 64, 128],
+      "k": 32,
+      "encod_dim": 256,
+      "dropout": 0,
+      "include_normals": true
+    }
+  }
+}
