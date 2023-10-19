@@ -55,7 +55,8 @@ def train(config):
     #set up pl trainer
     trainer = pl.Trainer(max_epochs=config["training"]["epochs"], accelerator='cuda',
                          enable_progress_bar=True,  precision=config["training"]["precision"], deterministic=False,
-                         logger=logger, callbacks=[checkpoint_callback, ModelSummary(max_depth=2)])
+                         logger=logger, callbacks=[checkpoint_callback, ModelSummary(max_depth=2)],
+                         devices=config["training"]["devices"])
 
     #train
     trainer.fit(lit_network, dataset)

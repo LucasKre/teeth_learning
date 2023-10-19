@@ -10,7 +10,8 @@
     "epochs": 1000,
     "batch_size": 4096,
     "lr": 0.0001,
-    "precision": 32
+    "precision": 32,
+    "devices": [0]
   },
   "network": {
     "sdf_decoder": {
