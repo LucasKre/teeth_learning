@@ -23,7 +23,8 @@ class SDFEncoder(nn.Module):
         elif self.encoder_type == "ConvPointNet":
             self.mesh_encoder = ConvPointnet(c_dim=config["network"]["mesh_encoder"]["encod_dim"],
                                              hidden_dim=config["network"]["mesh_encoder"]["hidden_dim"],
-                                             plane_resolution=config["network"]["mesh_encoder"]["plane_resolution"])
+                                             plane_resolution=config["network"]["mesh_encoder"]["plane_resolution"],
+                                             n_blocks=config["network"]["mesh_encoder"]["nr_of_blocks"],)
         else:
             raise NotImplementedError
         self.sdf_network = SDFNetwork(
