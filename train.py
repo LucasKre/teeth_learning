@@ -54,7 +54,7 @@ def train(config):
                           sampler=sampler,
                           in_memory=config["dataset"]["in_memory"])
 
-    dataloader = DataLoader(dataset, batch_size=config["training"]["batch_size"], shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=config["training"]["batch_size"], shuffle=True, num_workers=config["training"].get("num_workers", 12))
 
     lit_network = LitSDFEncoder(config)
 
