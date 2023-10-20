@@ -7,13 +7,14 @@ from tqdm import tqdm
 
 
 class BaseDataset(Dataset):
-    def __init__(self, root_dir, mesh_dir, process_dir, preprocessing=None, in_memory=False):
+    def __init__(self, root_dir, mesh_dir, process_dir, preprocessing=None, in_memory=False, sampler=None):
         super(BaseDataset, self).__init__()
         self.root_dir = root_dir
         self.mesh_dir = mesh_dir
         self.process_dir = process_dir
         self.preprocessing = preprocessing
         self.in_memory = in_memory
+        self.sampler = sampler
         # create folder if not existing
         if not os.path.exists(os.path.join(self.root_dir, self.process_dir)):
             os.makedirs(os.path.join(self.root_dir, self.process_dir))
@@ -57,9 +58,12 @@ class BaseDataset(Dataset):
 
     def __getitem__(self, index):
         if self.in_memory:
-            return self.data[index]
+            data = self.data[index]
         else:
-            return self.__load_from_file(index)
+            data = self.__load_from_file(index)
+        if self.sampler is not None:
+            data = self.sampler(data)
+        return data
 
     def __len__(self):
         return len(self.file_names)

@@ -48,10 +48,10 @@ class NormalizeMesh:
 class MeshToSdf:
     """Convert a mesh to a signed distance field."""
 
-    def __init__(self, surface_points=20000,
-                 offset_points=20000,
+    def __init__(self, surface_points=60000,
+                 offset_points=60000,
                  offset_s=0.1,
-                 grid_resolution=32,
+                 grid_resolution=42,
                  grid_min=-1,
                  grid_max=1,
                  include_normals=True):

@@ -7,8 +7,12 @@
   },
   "training": {
     "log_dir": "logs",
-    "epochs": 1000,
-    "batch_size": 4096,
+    "epochs": 1500,
+    "batch_size": 6,
+    "points_per_batch": 2000,
+    "sample_p_surface": 0.3,
+    "sample_p_offset": 0.5,
+    "sample_p_grid": 0.2,
     "lr": 0.0001,
     "precision": 32,
     "devices": [0]

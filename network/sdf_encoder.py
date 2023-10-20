@@ -4,6 +4,7 @@ from torch import nn
 from network.mesh_encoder import DGCNNEncoder
 from network.conv_pointnet_encoder import ConvPointnet
 from network.sdf_network import SDFNetwork
+import json
 
 
 class SDFEncoder(nn.Module):
@@ -36,13 +37,14 @@ class SDFEncoder(nn.Module):
             cond = self.mesh_encoder(pc, pc_n)
             cond = cond.repeat(batch_size, 1)
         elif self.encoder_type == "ConvPointNet":
-            xb = x.unsqueeze(0)
-            cond = self.mesh_encoder(pc, xb)
-            cond = cond.squeeze()
-        sdf = self.sdf_network(x, cond).flatten()
+            cond = self.mesh_encoder(pc, x)
+        sdf = self.sdf_network(x, cond)
         return sdf
 
     def predict_sdf(self, pc, pc_n, coords):
         with torch.no_grad():
             pc = pc.unsqueeze(0)
             return self.forward(pc, pc_n, coords)
+
+
+

@@ -13,6 +13,7 @@ from dataset.dataset import BaseDataset
 import lightning.pytorch as pl
 
 from dataset.preprocessing import Compose, MoveMeshToCenter, NormalizeMesh, MeshToSdf
+from dataset.sampler import DataSampler
 from network.sdf_encoder import SDFEncoder
 from network.lightning_networks import LitSDFEncoder
 # set seed
@@ -38,11 +39,23 @@ def train(config):
          NormalizeMesh(),
          MeshToSdf(grid_min=-1, grid_max=1)]
     )
+
+    sampler = DataSampler(
+        nr_of_points=config["training"]["points_per_batch"],
+        p_surface=config["training"]["sample_p_surface"],
+        p_offset=config["training"]["sample_p_offset"],
+        p_grid=config["training"]["sample_p_grid"]
+    )
+
     dataset = BaseDataset(root_dir=config["dataset"]["root_dir"],
                           mesh_dir=config["dataset"]["mesh_dir"],
                           process_dir=config["dataset"]["process_dir"],
                           preprocessing=transform,
+                          sampler=sampler,
                           in_memory=config["dataset"]["in_memory"])
+
+    dataloader = DataLoader(dataset, batch_size=config["training"]["batch_size"], shuffle=True)
+
     lit_network = LitSDFEncoder(config)
 
     #compile model
@@ -59,7 +72,7 @@ def train(config):
                          devices=config["training"]["devices"])
 
     #train
-    trainer.fit(lit_network, dataset)
+    trainer.fit(lit_network, dataloader, ckpt_path=config["training"].get("resume"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run 3D deep learning experiments")

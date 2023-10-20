@@ -544,7 +544,7 @@ class ResnetBlockFC(nn.Module):
 
 if __name__ == '__main__':
     model = ConvPointnet(c_dim=128, hidden_dim=128, plane_resolution=64)
-    pc = torch.rand(1, 1024, 3)
-    query = torch.rand(1, 2024, 3)
+    pc = torch.rand(2, 1024, 3)
+    query = torch.rand(2, 2024, 3)
     out = model(pc, query)
     print(out.shape)

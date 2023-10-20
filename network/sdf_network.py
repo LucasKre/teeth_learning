@@ -29,18 +29,22 @@ class SDFNetwork(nn.Module):
         )
 
     def forward(self, coords, cond):
+        batch_size = coords.size(0)
+        coords = coords.reshape(-1, 3)
+        cond = cond.reshape(-1, self.cond_dim)
         coords = self.coords_encoder(coords)
         x = torch.cat((coords, cond), dim=1)
         for i in range(len(self.block)):
             x = self.block[i](x)
         x = self.out(x)
+        x = x.reshape(batch_size, -1)
         return x
 
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    coors = torch.rand(32, 3).to(device)
-    cond = torch.rand(32, 128).to(device)
+    coords = torch.rand(3, 32, 3).to(device)
+    cond = torch.rand(3, 32, 128).to(device)
     model = SDFNetwork().to(device)
-    out = model(coors, cond)
+    out = model(coords, cond)
     print(out.shape)
