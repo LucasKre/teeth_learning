@@ -42,7 +42,7 @@ def sdf_to_mesh(cube_sdf, level_set=0.0, smooth=True):
     return mesh
 
 
-def reconstruct_mesh(mesh, network, n=128, max_batch=20000, smooth=True):
+def reconstruct_mesh(mesh, network, centroid=None, n=128, max_batch=20000, smooth=True):
     """Reconstruct a mesh by using a trained network."""
     device = network.device
     transform = Compose(
@@ -55,6 +55,7 @@ def reconstruct_mesh(mesh, network, n=128, max_batch=20000, smooth=True):
     pc_n = data["surface_normals"].to(device).float()
     cube = create_cube(n)
     cube_points = cube.shape[0]
+    centroid = centroid.to(device)
     head = 0
     for i in tqdm(range(0, cube_points, max_batch)):
         # while head < cube_points:
@@ -85,7 +86,7 @@ def reconstruction_error_mesh(mesh, network, centroid=None):
     query = torch.from_numpy(query).unsqueeze(0).to(network.device).float()
     pc = data["surface_points"].to(device).float()
     pc_n = data["surface_normals"].to(device).float()
-
+    centroid = centroid.to(device)
     pred_sdf = network.network.predict_sdf(pc, pc_n, centroid, query).flatten()
 
     error = torch.abs(0 - pred_sdf)
@@ -120,5 +121,5 @@ def distance_to_rgb(distances):
 def color_reconstruction_error(mesh, network, centroid=None):
     """Color a mesh by its reconstruction error."""
     error = reconstruction_error_mesh(mesh, network, centroid=centroid)
-    mesh.visual.vertex_colors = distance_to_rgb(error.detach().cpu().numpy())
+    mesh.visual.face_colors = distance_to_rgb(error.detach().cpu().numpy())
     return mesh

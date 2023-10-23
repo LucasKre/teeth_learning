@@ -45,6 +45,7 @@ class SDFEncoder(nn.Module):
     def predict_sdf(self, pc, pc_n, centroid, coords):
         with torch.no_grad():
             pc = pc.unsqueeze(0)
+            centroid = centroid.unsqueeze(0)
             return self.forward(pc, pc_n, centroid, coords)
 
 
