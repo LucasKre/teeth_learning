@@ -3,7 +3,8 @@
     "root_dir": "data/faust",
     "mesh_dir": "meshes",
     "process_dir": "preprocessed_local_sdf",
-    "in_memory": false
+    "in_memory": false,
+    "locals": true
   },
   "training": {
     "log_dir": "logs",

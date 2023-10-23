@@ -12,7 +12,8 @@ from lightning.pytorch import seed_everything
 from dataset.dataset import BaseDataset
 import lightning.pytorch as pl
 
-from dataset.preprocessing import Compose, MoveMeshToCenter, NormalizeMesh, MeshToSdf
+from dataset.preprocessing import Compose, MoveMeshToCenter, NormalizeMesh, MeshToSdf, MeshToLocalSubParts, \
+    LocalMeshToSdf
 from dataset.sampler import DataSampler
 from network.sdf_encoder import SDFEncoder
 from network.lightning_networks import LitSDFEncoder
@@ -34,11 +35,21 @@ seed_everything(SEED, workers=True)
 
 def train(config):
     #set up dataset and network
-    transform = Compose(
-        [MoveMeshToCenter(),
-         NormalizeMesh(),
-         MeshToSdf(grid_min=-1, grid_max=1)]
-    )
+
+    if config["dataset"]["locals"]:
+        transform = Compose(
+            [MoveMeshToCenter(),
+             NormalizeMesh(),
+             MeshToLocalSubParts(nr_of_locals=15, distance=0.18),
+             LocalMeshToSdf(transform=MeshToSdf(grid_min=-1, grid_max=1, surface_points=20000, offset_points=20000,
+                                                grid_resolution=24))]
+        )
+    else:
+        transform = Compose(
+            [MoveMeshToCenter(),
+             NormalizeMesh(),
+             MeshToSdf(grid_min=-1, grid_max=1)]
+        )
 
     sampler = DataSampler(
         nr_of_points=config["training"]["points_per_batch"],
