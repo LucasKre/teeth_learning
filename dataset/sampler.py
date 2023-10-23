@@ -37,7 +37,8 @@ class DataSampler(object):
             "surface_points": data["surface_points"],
             "surface_normals": data["surface_normals"],
             "sampled_points": coords,
-            "sampled_sdf": sdf
+            "sampled_sdf": sdf,
+            "centroid": data.get("centroid"),
         }
 
         return sampled_data

@@ -69,6 +69,7 @@ local_settings.py
 # Pytorch checkpoints
 *.pth
 *.pt
+*.ckpt
 
 # Exclude Notebooks and notebook ceckpoints
 *.ipynb

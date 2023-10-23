@@ -16,8 +16,9 @@ class LitSDFEncoder(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         pc = batch["surface_points"].float()
         pc_n = batch["surface_normals"].float()
+        centroid = batch["centroid"].float()
         x, sdf = batch["sampled_points"], batch["sampled_sdf"]
-        pred_sdf = self.network(pc, pc_n, x)
+        pred_sdf = self.network(pc, pc_n, centroid, x)
         loss = self.criterion(pred_sdf, sdf)
         self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True, on_step=False, batch_size=self.config["training"]["batch_size"])
         return loss

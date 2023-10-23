@@ -32,13 +32,13 @@ class SDFEncoder(nn.Module):
             hidden_dims=config["network"]["sdf_decoder"]["hidden_dims"],
         )
 
-    def forward(self, pc, pc_n, x):
+    def forward(self, pc, pc_n, centroid, x):
         batch_size = x.size(0)
         if self.encoder_type == "DGCNN":
             cond = self.mesh_encoder(pc, pc_n)
             cond = cond.repeat(batch_size, 1)
         elif self.encoder_type == "ConvPointNet":
-            cond = self.mesh_encoder(pc, x)
+            cond = self.mesh_encoder(pc, x, centroid)
         sdf = self.sdf_network(x, cond)
         return sdf
 
