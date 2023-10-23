@@ -21,9 +21,8 @@ Wikipedia-API==0.6.0
 cssutils==2.7.1
 eli5==0.13.0
 lightning==2.1.0
-trimesh[easy]==4.0.0
+trimesh==4.0.0
 pysdf==0.1.9
 PyMCubes==0.1.4
 tensorboard==2.14.0
-torch-scatter==2.1.2
-scikit-image==0.22.0
+scikit-image==0.21.0

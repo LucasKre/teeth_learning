@@ -2,6 +2,7 @@ import mcubes
 import torch
 import trimesh
 from tqdm import tqdm
+from dataset.preprocessing import Compose, MoveMeshToCenter, NormalizeMesh, MeshToSdf
 
 
 def create_cube(resolution):
@@ -43,6 +44,7 @@ def sdf_to_mesh(cube_sdf, level_set=0.0, smooth=True):
 
 def reconstruct_mesh(mesh, network, n=128, max_batch=20000, smooth=True):
     """Reconstruct a mesh by using a trained network."""
+    device = network.device
     transform = Compose(
         [MoveMeshToCenter(),
          NormalizeMesh(),
@@ -55,7 +57,7 @@ def reconstruct_mesh(mesh, network, n=128, max_batch=20000, smooth=True):
     cube_points = cube.shape[0]
     head = 0
     for i in tqdm(range(0, cube_points, max_batch)):
-    #while head < cube_points:
+        # while head < cube_points:
         query = cube[head: min(head + max_batch, cube_points), 0:3].to(device).unsqueeze(0)
 
         pred_sdf = network.network.predict_sdf(pc, pc_n, query)
@@ -71,6 +73,7 @@ def reconstruct_mesh(mesh, network, n=128, max_batch=20000, smooth=True):
 
 def reconstruction_error_mesh(mesh, network):
     """Calculate the reconstruction error for a mesh."""
+    device = network.device
     transform = Compose(
         [MoveMeshToCenter(),
          NormalizeMesh()]
@@ -89,14 +92,16 @@ def reconstruction_error_mesh(mesh, network):
     # error = error.max() - error
     return error + 0.0000001
 
+
 def rgb(minimum, maximum, value):
     """Convert a value to a rgb color."""
     minimum, maximum = float(minimum), float(maximum)
-    ratio = 2 * (value-minimum) / (maximum - minimum)
-    b = int(max(0, 255*(1 - ratio)))
-    r = int(max(0, 255*(ratio - 1)))
+    ratio = 2 * (value - minimum) / (maximum - minimum)
+    b = int(max(0, 255 * (1 - ratio)))
+    r = int(max(0, 255 * (ratio - 1)))
     g = 255 - b - r
     return r, g, b
+
 
 def distance_to_rgb(distances):
     """Convert a list of distances to a list of rgb colors."""
@@ -111,16 +116,9 @@ def distance_to_rgb(distances):
 
     return rgb_list
 
+
 def color_reconstruction_error(mesh, network):
     """Color a mesh by its reconstruction error."""
     error = reconstruction_error_mesh(mesh, network)
     mesh.visual.vertex_colors = distance_to_rgb(error.detach().cpu().numpy())
     return mesh
-
-
-
-
-
-
-
-
