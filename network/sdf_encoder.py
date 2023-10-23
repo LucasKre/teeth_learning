@@ -42,10 +42,10 @@ class SDFEncoder(nn.Module):
         sdf = self.sdf_network(x, cond)
         return sdf
 
-    def predict_sdf(self, pc, pc_n, coords):
+    def predict_sdf(self, pc, pc_n, centroid, coords):
         with torch.no_grad():
             pc = pc.unsqueeze(0)
-            return self.forward(pc, pc_n, coords)
+            return self.forward(pc, pc_n, centroid, coords)
 
 
 

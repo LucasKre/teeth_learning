@@ -71,7 +71,7 @@ def reconstruct_mesh(mesh, network, n=128, max_batch=20000, smooth=True):
     return mesh_rec
 
 
-def reconstruction_error_mesh(mesh, network):
+def reconstruction_error_mesh(mesh, network, centroid=None):
     """Calculate the reconstruction error for a mesh."""
     device = network.device
     transform = Compose(
@@ -86,7 +86,7 @@ def reconstruction_error_mesh(mesh, network):
     pc = data["surface_points"].to(device).float()
     pc_n = data["surface_normals"].to(device).float()
 
-    pred_sdf = network.network.predict_sdf(pc, pc_n, query).flatten()
+    pred_sdf = network.network.predict_sdf(pc, pc_n, centroid, query).flatten()
 
     error = torch.abs(0 - pred_sdf)
     # error = error.max() - error
@@ -117,8 +117,8 @@ def distance_to_rgb(distances):
     return rgb_list
 
 
-def color_reconstruction_error(mesh, network):
+def color_reconstruction_error(mesh, network, centroid=None):
     """Color a mesh by its reconstruction error."""
-    error = reconstruction_error_mesh(mesh, network)
+    error = reconstruction_error_mesh(mesh, network, centroid=centroid)
     mesh.visual.vertex_colors = distance_to_rgb(error.detach().cpu().numpy())
     return mesh
