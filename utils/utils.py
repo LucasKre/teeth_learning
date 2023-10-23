@@ -61,7 +61,7 @@ def reconstruct_mesh(mesh, network, centroid=None, n=128, max_batch=20000, smoot
         # while head < cube_points:
         query = cube[head: min(head + max_batch, cube_points), 0:3].to(device).unsqueeze(0)
 
-        pred_sdf = network.network.predict_sdf(pc, pc_n, query)
+        pred_sdf = network.network.predict_sdf(pc, pc_n, centroid, query)
 
         cube[head: min(head + max_batch, cube_points), 3] = pred_sdf.squeeze()
 
