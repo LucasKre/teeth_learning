@@ -17,6 +17,7 @@ from dataset.preprocessing import Compose, MoveMeshToCenter, NormalizeMesh, Mesh
 from dataset.sampler import DataSampler
 from network.sdf_encoder import SDFEncoder
 from network.lightning_networks import LitSDFEncoder
+
 # set seed
 SEED = 42
 torch.manual_seed(SEED)
@@ -34,16 +35,19 @@ seed_everything(SEED, workers=True)
 
 
 def train(config):
-    #set up dataset and network
+    # set up dataset and network
 
     if config["dataset"]["locals"]:
-        transform = Compose(
-            [MoveMeshToCenter(),
-             NormalizeMesh(),
-             MeshToLocalSubParts(nr_of_locals=15, distance=0.18),
-             LocalMeshToSdf(transform=MeshToSdf(grid_min=-1, grid_max=1, surface_points=20000, offset_points=20000,
-                                                grid_resolution=24))]
-        )
+        transform = Compose([
+            MeshToLocalSubParts(nr_of_locals=20, distance=0.3),
+            LocalMeshToSdf(transform=Compose([MoveMeshToCenter(),
+                                              NormalizeMesh(),
+                                              MeshToSdf(grid_min=-1, grid_max=1, surface_points=20000,
+                                                        offset_points=20000,
+                                                        grid_resolution=24)
+                                              ]))
+        ])
+
     else:
         transform = Compose(
             [MoveMeshToCenter(),
@@ -65,25 +69,28 @@ def train(config):
                           sampler=sampler,
                           in_memory=config["dataset"]["in_memory"])
 
-    dataloader = DataLoader(dataset, batch_size=config["training"]["batch_size"], shuffle=True, num_workers=config["training"].get("num_workers", 12))
+    dataloader = DataLoader(dataset, batch_size=config["training"]["batch_size"], shuffle=True,
+                            num_workers=config["training"].get("num_workers", 12))
 
     lit_network = LitSDFEncoder(config)
 
-    #compile model
+    # compile model
     # lit_network.network = torch.compile(lit_network.network)
 
     logger = TensorBoardLogger(save_dir=config["training"]["log_dir"])
 
-    checkpoint_callback = ModelCheckpoint(dirpath=logger.log_dir, save_top_k=1, monitor="train_loss", mode="min", save_last=False)
+    checkpoint_callback = ModelCheckpoint(dirpath=logger.log_dir, save_top_k=1, monitor="train_loss", mode="min",
+                                          save_last=False)
 
-    #set up pl trainer
+    # set up pl trainer
     trainer = pl.Trainer(max_epochs=config["training"]["epochs"], accelerator='cuda',
-                         enable_progress_bar=True,  precision=config["training"]["precision"], deterministic=False,
+                         enable_progress_bar=True, precision=config["training"]["precision"], deterministic=False,
                          logger=logger, callbacks=[checkpoint_callback, ModelSummary(max_depth=2)],
                          devices=config["training"]["devices"])
 
-    #train
+    # train
     trainer.fit(lit_network, dataloader, ckpt_path=config["training"].get("resume"))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run 3D deep learning experiments")
@@ -94,6 +101,3 @@ if __name__ == "__main__":
     config = json.load(open(config))
 
     train(config)
-
-
-
