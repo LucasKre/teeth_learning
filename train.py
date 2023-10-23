@@ -13,7 +13,7 @@ from dataset.dataset import BaseDataset
 import lightning.pytorch as pl
 
 from dataset.preprocessing import Compose, MoveMeshToCenter, NormalizeMesh, MeshToSdf, MeshToLocalSubParts, \
-    LocalMeshToSdf
+    LocalMeshToSdf, SdfToLocalSubParts
 from dataset.sampler import DataSampler
 from network.sdf_encoder import SDFEncoder
 from network.lightning_networks import LitSDFEncoder
@@ -38,15 +38,13 @@ def train(config):
     # set up dataset and network
 
     if config["dataset"]["locals"]:
-        transform = Compose([
-            MeshToLocalSubParts(nr_of_locals=20, distance=0.3),
-            LocalMeshToSdf(transform=Compose([MoveMeshToCenter(),
-                                              NormalizeMesh(),
-                                              MeshToSdf(grid_min=-1, grid_max=1, surface_points=20000,
-                                                        offset_points=20000,
-                                                        grid_resolution=24)
-                                              ]))
-        ])
+        transform = Compose(
+            [MoveMeshToCenter(),
+             NormalizeMesh(),
+             MeshToSdf(grid_min=-1, grid_max=1, surface_points=20000, offset_points=20000, grid_resolution=24),
+             SdfToLocalSubParts(nr_of_locals=25, distance=0.18),
+             LocalMeshToSdf()]
+        )
 
     else:
         transform = Compose(

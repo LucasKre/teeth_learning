@@ -28,6 +28,11 @@ def farthest_point_sample(xyz, npoint):
         farthest = torch.max(distance, -1)[1]
     return centroids
 
+def filter_mask_by_distance(pc, centroid, distance):
+    dist = torch.norm(pc - centroid, dim=1)
+    mask = dist < distance
+    return mask
+
 
 class Compose:
     """Compose several transforms together."""
@@ -131,6 +136,42 @@ class MeshToSdf:
         return out_dict
 
 
+class SdfToLocalSubParts:
+
+    def __init__(self, nr_of_locals=5, distance=0.3, normalize_by_centroid=True):
+        self.nr_of_locals = nr_of_locals
+        self.distance = distance
+        self.normalize_by_centroid = normalize_by_centroid
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    def __call__(self, data):
+        pc = data["surface_points"].to(self.device).float()
+        centroids = farthest_point_sample(pc.unsqueeze(0), self.nr_of_locals)
+        centroids = centroids.squeeze(0)
+        sub_sdfs = []
+        for c_idx in centroids:
+            c = pc[c_idx]
+            mask_surface = filter_mask_by_distance(pc, c, self.distance).cpu()
+            mask_offset = filter_mask_by_distance(data["offset_points"].to(self.device), c, self.distance).cpu()
+            mask_grid = filter_mask_by_distance(data["grid_points"].to(self.device), c, self.distance).cpu()
+            sub_sdf = {
+                "surface_points": data["surface_points"][mask_surface],
+                "surface_normals": data["surface_normals"][mask_surface],
+                "surface_sdf": data["surface_sdf"][mask_surface],
+                "offset_points": data["offset_points"][mask_offset],
+                "offset_sdf": data["offset_sdf"][mask_offset],
+                "grid_points": data["grid_points"][mask_grid],
+                "grid_sdf": data["grid_sdf"][mask_grid]
+            }
+            if self.normalize_by_centroid:
+                sub_sdf["surface_points"] -= c.cpu()
+                sub_sdf["offset_points"] -= c.cpu()
+                sub_sdf["grid_points"] -= c.cpu()
+            sub_sdfs.append(sub_sdf)
+        centroid_coords = pc[centroids].cpu()
+        return sub_sdfs, centroid_coords
+
+
 class MeshToLocalSubParts:
     """Convert a mesh to several local sub parts."""
 
@@ -157,12 +198,9 @@ class MeshToLocalSubParts:
 
 class LocalMeshToSdf:
 
-    def __init__(self, transform=MeshToSdf()):
-        self.transform = transform
-
     def __call__(self, data):
         local_meshes, centroids = data
-        for mesh, c in zip(local_meshes, centroids):
-            sdf_dift = self.transform(mesh)
-            sdf_dift["centroid"] = c
-            yield sdf_dift
+        for sdf_dict, c in zip(local_meshes, centroids):
+            sdf_dict["centroid"] = c
+            yield sdf_dict
+
