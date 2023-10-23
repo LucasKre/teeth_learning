@@ -28,10 +28,12 @@ def farthest_point_sample(xyz, npoint):
         farthest = torch.max(distance, -1)[1]
     return centroids
 
-def filter_mask_by_distance(pc, centroid, distance):
+def filter_mask_by_distance(pc, centroid, distance, max_points=5000):
     dist = torch.norm(pc - centroid, dim=1)
     mask = dist < distance
-    return mask
+    mask_idx = torch.where(mask)[0]
+    rand_idx = torch.randint(0, mask_idx.shape[0], (max_points,))
+    return mask_idx[rand_idx]
 
 
 class Compose:
